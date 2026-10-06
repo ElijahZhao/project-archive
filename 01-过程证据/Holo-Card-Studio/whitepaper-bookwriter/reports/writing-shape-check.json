@@ -1,0 +1,78 @@
+{
+  "policyVersion": "writing-shape-v3",
+  "generatedAt": "2026-09-29T04:11:01.807Z",
+  "status": "pass",
+  "checkedFiles": 8,
+  "failureCount": 0,
+  "warningCount": 0,
+  "scannedFiles": 3,
+  "reusedFiles": 5,
+  "failures": [],
+  "warnings": [],
+  "files": [
+    {
+      "file": "manuscript/ch01-executive-summary.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "dea29adebd58b6ee98d25debe13ac52bf2df9ae77df1e16ea052752dc0ce6588",
+      "reused": true
+    },
+    {
+      "file": "manuscript/ch02-background-motivation.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "7d599c9c0be75e48b06eddd7e6889996e03724ae07df535bd1e484b05dc29e44",
+      "reused": true
+    },
+    {
+      "file": "manuscript/ch03-system-architecture.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "f10b19d5127c4aa92f830c7c4f121a23dcf70096f582918f53489ebdebea2ac4",
+      "reused": false
+    },
+    {
+      "file": "manuscript/ch04-ai-generation-pipeline.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "3654e36abca8f2e8336660be4a49d41e49c689a51c7aae816e82290235f3a60a",
+      "reused": false
+    },
+    {
+      "file": "manuscript/ch05-rendering-shaders.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "f7db7e58c929cff04d37acb2f968a539a23a9f40a6e4965b237823b609671cbe",
+      "reused": false
+    },
+    {
+      "file": "manuscript/ch06-deployment-operations.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "8c2218703710f3e5403e34519188f82d20f778228eeb70058193cf0f3213a28d",
+      "reused": true
+    },
+    {
+      "file": "manuscript/ch07-engineering-practice.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "53c6ee0cbe72ee2b8c8e2796d18df6ecd11ae7a9e03b69f03813d069be8180b0",
+      "reused": true
+    },
+    {
+      "file": "manuscript/ch08-limitations-roadmap-contribution.md",
+      "status": "pass",
+      "failures": [],
+      "warnings": [],
+      "sha256": "6c18314e1fbed42c7d7909129cc34091662921068a4980862b182e701cadd97b",
+      "reused": true
+    }
+  ]
+}

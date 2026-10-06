@@ -1,0 +1,263 @@
+<!-- title: final -->
+<!-- generated-at: 2026-09-29T04:11:02.124Z -->
+
+---
+
+<!-- source: manuscript/ch01-executive-summary.md -->
+
+# 第一章 执行摘要（Executive Summary）
+
+HoloLab Studio is an end-to-end, reproducible, and auditable AIGC application pipeline that turns a single text description — or a single photo — into an interactive 3D holographic trading card, and publishes it as a zero-backend static gallery on GitHub Pages for anyone to open and play with. The pipeline runs entirely on deterministic engineering steps: layered image generation with ByteDance's Seedream 5.0, background removal with rembg, line-art extraction with OpenCV, programmatic typography, offline assembly and rendering in Blender, real-time reconstruction in a Three.js viewer, and static deployment without a server or database.
+
+The project was built as the author's portfolio piece for graduate applications in AI and AI-adjacent programs. The author's undergraduate background is artificial intelligence, and the design goal was to demonstrate not a single-model trick, but a system-level capability: knowing how to decompose a hard generative task into layers, pick the right tool for each layer, keep every intermediate artifact on disk, and document every tradeoff honestly.
+
+Three capabilities of the project are worth highlighting to a technical reader. First, the four-layer asset strategy. A single generated image cannot move in parallax, cannot carry a separate foil effect, and cannot render reliable text. HoloLab therefore separates the subject (foreground, transparent background), the background (environment), the line art (glowing contour), and the typography (card text) into four independent layers, each produced by the tool that is best at it. Second, the dual rendering path. The same parallax and foil mathematics is implemented twice — once as Blender shader nodes for offline hero renders, once as GLSL in the Three.js fragment shader for real-time interaction — so the offline hero image and the in-browser preview stay visually consistent. Third, the zero-backend architecture. The gallery is a static site driven by a JSON manifest; publishing a new card is a single idempotent script; and the whole repository is free to host, free to audit, and free for the public.
+
+What the reader will find in the rest of this white paper: Chapter 2 frames the motivation and the AIGC context. Chapter 3 lays out the layered architecture and the data flow of a full publish. Chapter 4 details the AI generation pipeline — prompt engineering, matting, contour extraction, and typography — with the reasoning behind each tool choice. Chapter 5 explains how the Blender and Three.js paths share one mathematical model for parallax and foil. Chapter 6 covers deployment, idempotent publishing, and key security practices. Chapter 7 is an honest account of the bugs found and the reliability mechanisms that keep the pipeline reproducible. Chapter 8 closes with known limitations, the roadmap, and a precise statement of the author's contribution.
+
+The project is publicly accessible at https://Elijah-Lin-Dancer.github.io/Holo-Card-Studio/ , with full source, documentation, and **26 published cards in 8 languages** (zh · en · de · es · bn · da · pt · no) demonstrating the pipeline end to end. The complete pipeline can be rerun offline at negligible cost, which makes it a suitable reference for evaluation, reproduction, and extension.
+
+
+<!-- source: manuscript/ch02-background-motivation.md -->
+
+# 第二章 背景与动机（Background and Motivation）
+
+## 一、为什么还要做一个图像生成 demo
+
+By 2026, text-to-image models have become fast, cheap, and widely accessible. Per-image API prices have fallen by roughly 60% within a year, and efficient open-weight models have begun to close the gap with closed leaders. Public reports and conference statistics agree that diffusion-based image generation remains the dominant research line in the field. In this landscape, generating a single pretty picture is no longer a hard engineering problem — almost anyone can prompt a model and get a usable image. What remains genuinely hard is turning generative models into reliable, composable, product-grade systems: keeping identity consistent across layers, keeping text legible, keeping assets aligned, and keeping the whole pipeline reproducible.
+
+HoloLab Studio was designed against that harder problem. The goal was never "make an AI draw a card". It was "build a system in which an AI-generated picture becomes a physical-looking object with parallax depth, holographic foil, crisp text, and a public URL — and do it in a way that can be rerun, audited, and extended". This framing matches what the author wants to prove in graduate applications: not fluency with one API, but the ability to design and ship an end-to-end AI application with engineering judgment.
+
+## 二、个人动机
+
+The author is an undergraduate in artificial intelligence, applying for AI and AI-adjacent master's programs. In application guidance from multiple universities, the recurring advice is that applicants should demonstrate real projects on public platforms such as GitHub, with an end-to-end workflow (preprocessing, modeling, validation, deployment) and a clickable demo link. A single classifier notebook is the baseline; a deployed, documented, reproducible system is the differentiator.
+
+The author's motivation was therefore threefold. First, to exercise the full AI application stack — image generation APIs, computer vision preprocessing (matting and contour extraction), 3D graphics, real-time shaders, and static web deployment — in one coherent project. Second, to practice engineering honesty: the project records its own tradeoffs, failures, and workarounds rather than presenting only the finished result. Third, to create a public artifact that is both a portfolio piece and a genuinely usable tool: anyone can browse the gallery, interact with the cards, and read how they were made.
+
+## 三、上游项目与署名边界
+
+HoloLab Studio is a re-engineering of an open-source project, holo-card-studio, which is MIT-licensed. The upstream project already demonstrated a beautiful core idea: a card whose foil and parallax respond to the viewing angle, with drag-to-rotate and flip interactions. The upstream version, however, depends on a human artist or manual pipeline to prepare the layered assets — there is no automatic way to go from a sentence or a photo to a finished card.
+
+The author's contribution is to close exactly that gap. HoloLab replaces the manual asset preparation with an automated, four-layer AI pipeline, adds idempotent publishing and static deployment so the result is publicly reachable, and re-implements the shader mathematics so the offline Blender render and the in-browser Three.js preview share one formula. Everything inherited from the upstream MIT project is preserved and credited; the codebase additions — the generation pipeline, the build and export scripts, the publishing workflow, the gallery front-end, and the documentation — are the author's own work.
+
+## 四、问题定义
+
+Formally, the project addresses the following problem. Given a short natural-language description or a reference photo of a subject, produce a complete holographic trading card (front face, back face, edge, foil, and typography) and publish it on the public web, subject to four constraints. The first constraint is reliability: the pipeline must either succeed with validated assets or fail with a clear reason; it must never silently emit broken output. The second is reproducibility: rerunning the same configuration must produce the same card, and every intermediate artifact must remain on disk for inspection. The third is cost: the per-card cost must be negligible, so the pipeline can be run many times during development and by other users. The fourth is a zero-backend constraint: the public gallery must be static — no server, no database — so hosting is free and the deployment is auditable end to end.
+
+Chapters 3 through 6 show how each constraint is enforced in the architecture, the generation pipeline, the rendering path, and the deployment workflow.
+
+
+<!-- source: manuscript/ch03-system-architecture.md -->
+
+# 第三章 系统架构（System Architecture）
+
+## 一、设计目标与约束
+
+The architecture follows five explicit constraints, all derived from the problem statement in Chapter 2. First, public availability: the gallery must be open to anyone, so the site is static and hosted on GitHub Pages, with no server-side code. Second, zero backend: the card manifest is `cards.json`, all assets are static files, and generation runs locally, so there is nothing to maintain or pay for. Third, quality control: the four-layer asset strategy gives every layer its own validation and fallback. Fourth, audibility: the pipeline, publishing script, CI workflow, and documentation all live in the repository, inspectable line by line. Fifth, cost: per-card generation is designed to be negligible, so iteration and public use are both affordable. These constraints are not decorations; they shape every decision in the sections below.
+
+## 二、分层架构
+
+The system is organized as four layers, which communicate only through standard artifacts on disk: `assets/*.png`, `card.blend`, and `web/`. This makes each layer independently replaceable and debuggable.
+
+### （一）素材层（ai_generate.py）
+
+The asset layer turns a card configuration into four PNG layers: a transparent subject, an environment background, a line-art sheet, and a typography layer. It calls the Seedream 5.0 API, then applies rembg for matting, OpenCV for contours, and a font renderer for text. Every layer is validated before acceptance; a known limitation（已知局限）is that subject and background are independent generations, so composition is not pixel-exact by construction.
+
+### （二）生成层（run_pipeline.py）
+
+The generation layer consumes the four assets and produces a finished card. It validates the inputs, ensures a portable Blender build with SHA-256 verification, builds the scene and renders the hero image, exports the GLB with placeholder material slots, and assembles the per-card web page. Each step writes to disk before the next step reads, which is what makes the layer rerunnable.
+
+### （三）发布层（publish_card.py）
+
+The publishing layer moves a generated card into the gallery. Its operations are idempotent: verify artifacts, generate a thumbnail, archive the card with shared dependencies, rewrite the import map to the shared vendor, and update the manifest with deduplication and newest-first ordering. Re-publishing the same card converges to the same state; this is verified in practice, not assumed.
+
+### （四）展示层（gallery/）
+
+The presentation layer is pure front-end: a waterfall homepage driven by `cards.json`, and per-card pages that load a GLB and rebuild the holographic shader in real time with Three.js. It contains no backend logic, and any static host can serve it. The interactive viewer runs entirely in the browser.
+
+## 三、关键设计决策
+
+### （一）为什么素材分四层，而不是一张整图
+
+A single full-bleed image is flat: it cannot have parallax depth, a separate foil, or pixel-exact typography. The four-layer split maps one-to-one onto the Blender material nodes: subject moves forward, background recedes, line art glows on the contour, and text sits on the surface. Because each layer is an independent PNG, each can be generated, validated, and tuned separately. This is the foundation of the whole pipeline.
+
+### （二）为什么线稿用程序化提取，而不是让 AI 重画
+
+An AI redraw cannot guarantee pixel-level registration with the subject: position, scale, and contour would drift. Since the line art must glow exactly along the silhouette, HoloLab extracts it from the matted subject with OpenCV: the alpha channel yields the outer contour, Canny edges on the color image yield internal detail, and both merge on the same canvas. This is a deliberate divergence from the upstream project's manual tracing, and it removes a human bottleneck from the pipeline.
+
+### （三）为什么展厅用共享 vendor 而不是每卡自带依赖
+
+A per-card dependency copy would make gallery size grow linearly with card count. The shared `gallery/vendor/three/` directory plus an idempotent import-map rewrite brings the archive size per card from roughly 47 MB down to roughly 14 MB. The tradeoff is a coupling between cards and the shared vendor version, which the publishing script manages by rewriting import maps deterministically.
+
+### （四）为什么 Blender 用便携版自动下载
+
+Blender is large and system-dependent, so manual installation is a barrier to reproducibility. The ensure step downloads the official portable package and verifies its SHA-256 checksum; in restricted networks the package can be pre-seeded into `tools/`, and the pipeline detects and reuses it. This keeps the pipeline working on machines with no system Blender.
+
+### （五）构图一致性如何缓解
+
+The subject and background are two independent generations, so alignment is not guaranteed. The mitigations are threefold: prompts share one style prefix and the background prompt reserves empty space; parallax occlusion hides small misalignment as natural depth; and the tradeoff is documented in code and docs. In a portfolio, honesty about a tradeoff（不足如实记录）is more credible than hiding it.
+
+## 四、数据流（一次完整发布）
+
+A complete publish flows through five stages. First, `card-config.json` is read by the asset layer, which writes the four PNGs. Second, the generation layer validates assets, builds the scene, renders the hero, exports the GLB, and assembles the page. Third, the publishing layer generates the thumbnail, archives the card, rewrites the import map, and updates the manifest. Fourth, the repository is pushed to GitHub. Fifth, GitHub Actions deploys the gallery directory to Pages. Each stage consumes only what the previous stage wrote, so any stage can be re-run in isolation; this is the operational definition of reproducibility.
+
+## 五、可审计性
+
+Auditability is a first-class property. Every card keeps its work directory with raw AI outputs and matting results, plus a `verification.json` recording the Blender version, device, materials, and parameters. The publishing script is idempotent, so re-publishing removes the old archive and deduplicates the manifest. API keys live in a `.env` file excluded by `.gitignore`, so the public repository contains no secrets. Any reviewer can walk from a card on the website back to the configuration, code, and artifacts that produced it. The three originally planned steps — asset compression, rotating previews, and gallery classification — are all **shipped** (see Chapter 8); the collection has since grown to 26 cards and a public submission pipeline.
+
+
+<!-- source: manuscript/ch04-ai-generation-pipeline.md -->
+
+# 第四章 AI 生成管线（AI Generation Pipeline）
+
+## 一、四层结构与工具分工
+
+The core idea is divide and conquer: no single model is asked to do everything, and each layer uses the tool that is best at its specific job. The subject layer needs a transparent-background character, so it uses Seedream to generate a clean figure and rembg with u2net to cut the background, because generative models do not output alpha channels. The background layer needs an environment shot that can move independently for parallax, so it is generated as a separate Seedream image with the same style prefix. The line-art layer needs a white-background black-line contour that registers pixel-exactly with the subject, so it is extracted programmatically with OpenCV rather than redrawn by a model. The typography layer needs crisp card text, so it is rendered by a font renderer from the card configuration, because generative models remain unreliable at rendering CJK glyphs; this is a documented tradeoff（已知取舍）that favors correctness over convenience.
+
+## 二、提示词工程
+
+### （一）共享风格前缀
+
+The subject and background prompts share one style prefix, so both layers converge to the same visual world. The published cards use a style like "Japanese ukiyo-e and ink-wash anime collectible-card illustration, mineral-pigment texture, clear brush strokes, dramatic night lighting". The subject prompt appends the subject description plus a composition constraint: "centered, about 65% of the canvas, breathing space on all sides". The background prompt appends an environment description plus two constraints: "lower 40% stays empty for typography" and "no figures appear".
+
+### （二）参考图模式（以图生图）
+
+When the user provides a photo, the original image is passed as the image field to Seedream 5.0, and the prompt describes only the style and preservation constraints: "keep the pose, composition, and identity of the subject, repaint in the target style". Seedream 5.0 accepts joint text-plus-image input and can lock identity, which is one reason it was chosen. This mode is what makes personalized cards from a single photo possible.
+
+### （三）构图一致性的缓解
+
+Because subject and background are independent generations, pixel-level alignment is not guaranteed. The mitigations are: a shared style prefix with an explicitly quiet background; parallax occlusion in the viewer, where the subject overlaps the background; and honest documentation of the tradeoff in code and docs. In a portfolio, honesty about a limitation（局限）is more credible than perfection.
+
+## 三、抠图（rembg）
+
+Matting uses the u2net model, about 176 MB, chosen over the default bria-rmbg-2.0 model, about 1 GB, because u2net is far better suited to CPU inference. The input image is downsampled to half resolution before inference, then upscaled back with LANCZOS; this bounds memory and latency while keeping quality reasonable. If matting fails entirely, the pipeline degrades to a centered elliptical alpha fallback so validation can pass, but the high-quality path always prefers normal matting.
+
+## 四、线稿提取（OpenCV）
+
+Line-art extraction is a deterministic five-step routine. First, the alpha channel is thresholded into a subject mask. Second, Canny edges on the grayscale image extract internal detail, such as costume texture and facial features. Third, Canny on the alpha mask extracts the outer contour. Fourth, internal edges intersect the mask and union with the contour, producing a white-background black-line drawing. Fifth, a single erode pass thickens the lines; the code notes that a dilate pass would erase thin black lines into white, a real pitfall hit during development. Because the line art shares the subject's canvas and coordinates, the two layers are aligned by construction; the threshold parameters are stable for the illustration style used by the cards.
+
+## 五、文字层（字体排版）
+
+The typography layer reads the card configuration — title, subtitle, collection, technique, and edition number — and lays them out precisely on a transparent canvas using a system CJK serif font, with gold divider lines and stroke outlines. Text width auto-scales to prevent long titles from overflowing the card face. This guarantees that text on every card is byte-exact with the configuration, which generative models cannot yet meet reliably for Chinese text. The tradeoff is visual: programmatic text looks clean but less painterly than hand-drawn lettering; the project accepts this（接受此取舍）for correctness.
+
+## 六、为什么这样设计（作品集叙事）
+
+Four principles summarize the design. First, distrust the single model: image generation, matting, edge extraction, and text rendering each use the most reliable tool for the subtask, and the pipeline degrades gracefully when one tool fails. Second, reliability first: every layer has validation for real alpha, line-art extremes, and dimensions, with documented fallbacks, so the pipeline is reproducible rather than lucky. Third, explainability: every layer's product, parameters, and prompt land on disk, making the pipeline easy to debug and audit. Fourth, cost awareness: generation uses the flash tier of the image model where possible, keeping per-card cost near zero. The one-sentence-to-card mode — a language model drafting the configuration from a sentence — is now shipped as the **Create studio** and the issue-driven **public submission pipeline**, closing the loop from natural language to a published card.
+
+
+<!-- source: manuscript/ch05-rendering-shaders.md -->
+
+# 第五章 3D 渲染与实时着色（3D Rendering & Realtime Shaders）
+
+## 一、两条渲染路径的分工
+
+A holographic card has two rendering paths with different jobs. The offline path uses Blender Cycles, a path tracer, for the hero image and the thumbnail: physically accurate lighting, expensive, minutes per image, run only at publish time. The online path uses Three.js with a custom GLSL shader in the browser: WebGL renders every frame as the user drags, so it must run in real time. The browser cannot replicate Cycles' offline lighting, so the viewer reconstructs the same four-layer compositing and foil effect with the same UV and parallax formulas, producing a visually similar but not identical result. This divergence is declared in the upstream project and noted in the code comments; it is a known limitation（已知局限）of the real-time path.
+
+## 二、视差（Parallax）原理
+
+Parallax is the visual depth effect: the subject floats in front of the card, and the background recedes behind it, as the viewing angle changes. The math is a UV transform applied per layer:
+
+UV' = (UV − 0.5) × scale + 0.5 + viewOffset × depth
+
+Here viewOffset is the view direction projected onto the card plane in object-local space; depth is a per-layer signed coefficient; scale is a safety expansion that prevents layer edges from showing through. In the shipped cards, the subject uses scale 1.25 and depth +0.4 (forward); the background uses depth −0.25 (backward); the text uses depth 0 (stuck to the surface). A grazing-angle guard clamps the UV offset when the view is nearly parallel to the surface, preventing the UV from blowing open at extreme angles. The Blender side implements this as a custom node group, and the Three.js side implements the identical formula in the fragment shader's parallax function; both renderers share one mathematical model.
+
+## 三、镭射（Foil）材质
+
+The holographic foil is a color band sweeping from pink through yellow and blue to white, with a phase driven by UV plus a view offset:
+
+w = sin((uv.x·0.848 − uv.y·0.530)·2π·0.55 + 7·noise(uv·1.5))
+color = spectrum(w + viewPhase)
+
+In Blender, this is built with a wave texture node, a wood-grain particle texture, and a color ramp. In Three.js, the spectrum and wave functions are reimplemented in GLSL. The foil is blended OVERLAY onto the subject and background layers, and its strength is controlled by a user slider. A high-power sine creates a narrow specular sweep, so the foil appears to flow as the card moves; this effect is the visual signature of the product.
+
+## 四、星光与辉光
+
+Two finishing effects complete the look. Voronoi sparkles use a distance-to-edge feature with a threshold to create tiny glints, driven by four-dimensional noise so they flicker over time; both Blender and WebGL have matching implementations. A glow pass adds bloom: the Three.js path uses an UnrealBloomPass on a downsampled buffer to let foil highlights overflow, and the Blender path uses an equivalent compositor glow node. Saturation is protected by a gamma-style power and tone mapping, so the printed look is not washed out by highlights.
+
+## 五、导出链路
+
+The build script constructs the card scene; the export script then opens card.blend and replaces the material slots with placeholder materials named "web_front", "web_edge", "web_back", and "web_gold" before exporting the GLB with UVs and node hierarchy intact. The front-end matches these material names and attaches the real-time shader materials: web_front gets four-layer compositing plus parallax and foil; web_back gets the indigo back face; web_edge gets the card-edge foil; web_gold gets the antique-gold frame. This separation of offline and web material graphs keeps the export stable while allowing two implementations of the same visual result.
+
+## 六、性能
+
+Performance is bounded by design. The four textures are 1920×2880 PNGs at original resolution, which is the current main size cost and a known roadmap item. The WebGL path uses an orthographic camera and a single fullscreen compositing pass; the bloom pass runs on a downsampled buffer to keep fragment cost low. Users with the prefers-reduced-motion preference are served a version that disables auto-rotation, which respects accessibility requirements. The next steps（下一步建议）are texture compression and a hover preview per card, both scheduled in Chapter 8.
+
+
+<!-- source: manuscript/ch06-deployment-operations.md -->
+
+# 第六章 部署与运维（Deployment & Operations）
+
+## 一、纯静态展厅
+
+The public gallery is a pure static site: an HTML homepage, a JSON manifest, per-card HTML pages, shared vendor JavaScript, and image and model assets. Because there is no backend, it can be served by any static host at zero infrastructure cost, and the entire deployment is just a directory of files. This is a deliberate consequence of the zero-backend constraint in Chapter 2: the card list is data in cards.json, not rows in a database, and the interactive viewer runs entirely in the browser.
+
+## 二、GitHub Pages 部署
+
+The repository hosts the gallery under a subdirectory, so Pages must deploy that subdirectory rather than the repository root. The deployment uses GitHub Actions: a workflow checks out the repository, configures Pages, uploads the gallery directory as an artifact, and runs the Pages deploy action inside `deploy.yml`. Pushing to the main branch triggers the workflow automatically, and the site becomes available at the public URL after roughly one to two minutes. The workflow itself is in the repository, so the deployment procedure is auditable and reproducible.
+
+## 三、幂等的发布脚本
+
+Publishing a new card is a single command that runs the publish script with the project directory, the card id, and style tags. The script performs four idempotent operations: it regenerates the thumbnail at a fixed width; it archives the card into the gallery, removing any previous archive with the same id; it rewrites the card page's import map to point at the shared vendor directory instead of a per-card dependency; and it updates cards.json with deduplication and newest-first ordering, so the same card can be published repeatedly without creating duplicates or stale copies. Idempotency is verified in practice: re-publishing a card produces the same gallery state rather than an accumulating set of copies.
+
+## 四、密钥与安全
+
+API keys are stored in a local .env file whose key name is ARK_API_KEY, and .gitignore excludes it from version control. The repository therefore contains no secrets; the only configuration artifact that ships is a .env.example documenting the required key name. The deployment workflow never receives or forwards credentials. On the local machine, git credentials are managed separately with a credential helper, and the project repository history was checked to confirm that no key was ever committed. Security-sensitive reviews of the public repository can confirm the absence of secrets by inspection.
+
+## 五、资产治理
+
+Gallery size is managed by the shared vendor strategy and by archive hygiene. Each archived card keeps its five essential assets (subject, background, line art, typography, GLB) plus the thumbnail and the page; the work directory with intermediate artifacts stays out of the public gallery, in the generation workspace, so the published site carries only what the browser needs. The shared three.js bundle is hosted once in the gallery vendor directory rather than duplicated per card, which keeps the archive growth sublinear in the card count.
+
+## 六、排障与运维实践
+
+The project logs operational lessons as documentation. Common failure modes and their resolutions are recorded: a 404 on the site points to a wrong Pages branch or directory selection; a black card page points to missing WebGL support in the browser; slow image loading is handled by the per-card compression step that ships with every publish; and a .env appearing in git status is treated as a stop condition with instructions not to commit. Keeping these notes in the repository turns operational knowledge into part of the codebase, so the next deployer or reviewer does not have to rediscover the same traps.
+
+
+<!-- source: manuscript/ch07-engineering-practice.md -->
+
+# 第七章 工程实践与踩坑（Engineering Practice & Lessons）
+
+## 一、一个真实的发布级 Bug：缩略图自删
+
+The first published bug was discovered during a full-site audit: thumbnails were being deleted as soon as they were generated, leaving broken images on the homepage. The root cause was a call-order error in the publishing script — the archive step cleared the destination directory before the thumbnail generation step wrote into it, so the freshly created thumbnail was removed immediately. The fix reordered the pipeline to clear the archive first, then generate the thumbnail, then rewrite the import map, then write back the card id, and then update the manifest. After the fix, the live thumbnail returned HTTP 200 with the expected dimensions. The lesson recorded in the codebase is that idempotent scripts must specify the order of destructive and non-destructive steps explicitly, and that a verification pass over the live site — not just local generation — is what catches this class of bug.
+
+## 二、前后端契约 bug：网格选择器失效
+
+A front-end refactor replaced the gallery grid element's id, breaking the JavaScript lookup that renders cards: the homepage silently rendered zero cards while the console stayed clean. The fix added a fallback selector so the rendering code binds to the grid whether it is addressed by the old or the new id. A second layer of the same incident was browser caching: after the fix was deployed, the live page still showed zero cards until a cache-busting query parameter forced the browser to fetch the new script. Both lessons — resilient DOM bindings and cache-busting on static deployments — are documented as deployment practice.
+
+## 三、资产路径与依赖的坑
+
+A card page initially reported a 404 for its GLB model. Inspection showed the path was simply wrong in the card page: the GLB lived at the archived assets path, not the path the page was requesting. Correcting the URL restored the model. A related pitfall is the shared vendor strategy: when the import map rewrite is not idempotent, re-publishing the same card can accumulate broken dependency pointers; the rewrite function was verified to be idempotent so re-runs converge to the same correct state. These cases reinforce the rule that archive content, manifest content, and page content must be verified against each other after every publish.
+
+## 四、环境与依赖的坑
+
+Two environment-level lessons are recorded. First, the sandbox browser has no WebGL, so the 3D card page shows a fallback state; this is an environment limitation, not a project bug, and must be verified in a real browser. Second, background shell tasks in the build environment were terminated after a timeout, which silently interrupted a long render; the workaround is to split long tasks into foreground segments with bounded time each. Third, the background-removal stack hit a CPU performance wall with the default model; switching to u2net and downsampling before inference made matting feasible on CPU without a GPU. Each lesson is written into the project notes so the next operator does not re-discover it.
+
+## 五、模型与 API 的坑
+
+The image generation endpoint returned a 404 for the flash model name until the complete model id including its version date suffix was used; the documented model id in the official model list is the authoritative value, and the pipeline now accepts the model as an overridable parameter. A download endpoint for a portable Blender build returned HTTP 403 in a restricted network, so the pipeline was changed to reuse a pre-seeded portable package when present, and to verify SHA-256 checksums when downloading. These cases illustrate a general reliability rule: external dependencies must have a local fallback and a checksum, because network and API behavior is outside the project's control.
+
+## 六、可靠性机制总结
+
+Across the project, reliability comes from four mechanisms rather than from luck. Validation gates check real alpha, dimensions, and line-art extremes before a card can proceed. Fallbacks keep the pipeline alive when a single tool fails, while still preferring the high-quality path. Idempotent scripts and manifest deduplication make repeated publishing converge. And a written audit trail — verification.json per card, work directories retained, and documented bug fixes — makes every step inspectable. The combination is what allows the pipeline to be described as reproducible rather than merely working once.
+
+
+<!-- source: manuscript/ch08-limitations-roadmap-contribution.md -->
+
+# 第八章 局限、路线图与贡献（Limitations, Roadmap & Contribution）
+
+## 一、已知边界
+
+The project documents its limitations explicitly rather than presenting an idealized picture. The first is composition consistency: the subject and background are independent generations, so pixel-level alignment is not guaranteed; parallax occlusion and a quiet background mitigate the issue, but a user who demands exact composition control must accept this constraint. The second is asset size: the four textures start as full-resolution 1920×2880 PNGs; the publishing step now compresses them, which keeps each archived card at a few MB and first paint fast. The third is rendering fidelity: the real-time Three.js path approximates the offline Cycles lighting, so the two renderers are visually consistent but not identical. The fourth is environment dependence: the 3D viewer requires WebGL, which some environments disable; the site provides a fallback but the full experience needs a WebGL-capable browser. The fifth was the rotating preview: now shipped — every card gets a `preview.webm` rendered from a Blender rotation sequence (25 of 26 live cards), played on hover in the gallery.
+
+## 二、路线图
+
+The original roadmap — asset compression, rotating previews, gallery classification, and one-sentence-to-card mode — has all shipped: publish-time compression keeps archived cards small; every card gets a Blender-rendered `preview.webm`; the gallery gained bilingual filter chips and a curated timeline; and the Create studio plus the issue-driven submission pipeline turn a single sentence into a published card. What remains open is the natural growth of the project: keep shipping cards (the collection is now 26 cards in 8 languages and counting), harden the concurrent render workflow (push-retry and auto-deploy are already in place), and keep the public submission pipeline as the way anyone's idea becomes a permanent card. The lenticular dual-image mode from the upstream project remains a possible future extension.
+
+## 三、作者的贡献界定
+
+The author's contribution to HoloLab Studio can be stated precisely. The automated four-layer generation pipeline — prompt-engineering strategy, matting with rembg and u2net, contour extraction with OpenCV, and programmatic typography — is the author's own design and implementation. The build, export, and publishing scripts that make the pipeline idempotent and reproducible are the author's work. The re-implementation of the parallax and foil mathematics in the Three.js shader path, sharing one formula with the Blender side, is the author's work. The static-gallery front-end, the GitHub Actions deployment, and the full documentation set are the author's work. The holographic card concept, the card scene construction, and the MIT-licensed upstream code that the project builds upon are credited to the upstream project and its license. This boundary is maintained in the repository's README and licensing notes.
+
+## 四、对申请的意义
+
+For a graduate application in AI or an AI-adjacent field, this project argues three points in a single artifact. It demonstrates end-to-end system capability: the author did not stop at generating an image, but built the full path from a sentence to a publicly deployable interactive product. It demonstrates engineering judgment: tool selection is argued per layer, tradeoffs are documented, and failures are recorded with their fixes. And it demonstrates academic hygiene: the work is reproducible, auditable, and honestly scoped, with every claim traceable to code, configuration, or documentation in the public repository. The project is offered as a reference for evaluation, reproduction, and extension, and its complete pipeline can be rerun at negligible cost.
+

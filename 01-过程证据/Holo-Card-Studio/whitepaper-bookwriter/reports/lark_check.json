@@ -1,0 +1,13 @@
+{
+  "status": "pass",
+  "stage": "deliver",
+  "code": 0,
+  "markdownPath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/deliverables/final.md",
+  "fetchedPath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/.doubao-book-writer/doc_fetch.md",
+  "minCoverage": 0.85,
+  "coverage": 0.9693,
+  "missingHeadingCount": 0,
+  "markdownPlaceholders": [],
+  "fetchedPlaceholders": [],
+  "failures": []
+}

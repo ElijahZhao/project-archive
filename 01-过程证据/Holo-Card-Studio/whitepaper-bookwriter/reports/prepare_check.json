@@ -1,0 +1,21 @@
+{
+  "status": "pass",
+  "stage": "prepare",
+  "code": 0,
+  "workspace": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper",
+  "layout": "long",
+  "layoutSource": "filesystem",
+  "checklistPath": ".doubao-book-writer/requirement-checklist.json",
+  "outline": {
+    "status": "pass",
+    "failureCount": 0,
+    "summary": {
+      "chapterCount": 8,
+      "totalTargetWords": 28000,
+      "plannedChapterWords": 28000,
+      "dependencyEdges": 18
+    },
+    "reportPath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/.doubao-book-writer/reports/outline-structure-check.json"
+  },
+  "failures": []
+}

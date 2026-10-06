@@ -1,0 +1,117 @@
+{
+  "topic": "HoloLab Studio 项目技术白皮书：从一句话/一张照片到 3D 全息卡的端到端 AIGC 应用工程（本科人工智能申请者作品集交付物）",
+  "contentProfile": {
+    "id": "hololab-whitepaper",
+    "genreGuide": "whitepaper",
+    "audience": "海外 AI / AI 交叉方向硕士项目的招生官与教授（technical audience，具备 ML/CS 基础）",
+    "purpose": "以可审计的技术白皮书证明申请者具备端到端 AIGC 应用工程能力：图像生成、分层管线、3D 渲染、实时着色、静态部署与工程化文档"
+  },
+  "structureRules": {
+    "headingPolicy": "chinese-publication",
+    "maxContentFilesPerBatch": 2
+  },
+  "sourcePolicy": {
+    "mode": "search-before-writing",
+    "minimumDirections": 3,
+    "requireGapReview": true
+  },
+  "sourceInputs": [
+    {
+      "id": "architecture-doc",
+      "kind": "markdown",
+      "path": "../architecture.md",
+      "writePolicy": "read-only"
+    },
+    {
+      "id": "ai-pipeline-doc",
+      "kind": "markdown",
+      "path": "../ai-pipeline.md",
+      "writePolicy": "read-only"
+    },
+    {
+      "id": "graphics-doc",
+      "kind": "markdown",
+      "path": "../graphics.md",
+      "writePolicy": "read-only"
+    },
+    {
+      "id": "deployment-doc",
+      "kind": "markdown",
+      "path": "../DEPLOYMENT.md",
+      "writePolicy": "read-only"
+    },
+    {
+      "id": "blog-001",
+      "kind": "markdown",
+      "path": "../blog-001-holo-pipeline-notes.md",
+      "writePolicy": "read-only"
+    },
+    {
+      "id": "readme-en",
+      "kind": "markdown",
+      "path": "../../README.en.md",
+      "writePolicy": "read-only"
+    }
+  ],
+  "delivery": {
+    "mode": "lark-docx",
+    "requireReadBack": true
+  },
+  "requirements": [
+    {
+      "id": "R1",
+      "requirement": "面向海外 AI / AI 交叉方向硕士招生官与教授，证明申请者端到端 AIGC 应用工程能力（一句话/照片 → 四层素材 → Blender 3D 全息卡 → Three.js 查看器 → 纯静态零后端展厅 → GitHub Pages 公开上线）",
+      "priority": "main",
+      "in_scope": "yes",
+      "carrier": "全篇主线（ch01 摘要 / ch03 架构 / ch04 管线 / ch05 渲染 / ch06 部署）",
+      "resolution": ""
+    },
+    {
+      "id": "R2",
+      "requirement": "正文使用英文撰写（申请场景），技术准确、可审计：每个关键数字/决策/限制均可回溯到项目代码、文档或外部来源",
+      "priority": "main",
+      "in_scope": "yes",
+      "carrier": "全篇事实纪律（引用项目 docs 与 sources.md 外部来源）",
+      "resolution": ""
+    },
+    {
+      "id": "R3",
+      "requirement": "诚实记录 tradeoff、已知边界与踩坑（如构图一致性、素材体积、WebGL 环境限制），不夸大、不省略反证",
+      "priority": "main",
+      "in_scope": "yes",
+      "carrier": "ch07 工程实践与踩坑 / ch08 局限与路线图",
+      "resolution": ""
+    },
+    {
+      "id": "R4",
+      "requirement": "篇幅 8-12 页（约 28000 字符），章节目标字数之和等于全书目标",
+      "priority": "main",
+      "in_scope": "yes",
+      "carrier": "wordCountRules / chapter-ledger",
+      "resolution": ""
+    },
+    {
+      "id": "R5",
+      "requirement": "写作风格专业、克制、无 AI 味（避免套话与空洞堆砌），可直接发导师/招生办",
+      "priority": "no",
+      "in_scope": "yes",
+      "carrier": "ch01-ch08 全部正文（doubao-human-signal 校准）",
+      "resolution": ""
+    },
+    {
+      "id": "R6",
+      "requirement": "交付：飞书云文档 + 终稿 markdown 同步入库 holo-lab/docs/WHITEPAPER.md（GitHub 作品集）",
+      "priority": "no",
+      "in_scope": "yes",
+      "carrier": "deliver + 入库",
+      "resolution": ""
+    }
+  ],
+  "wordCountRules": [
+    {
+      "id": "total-length",
+      "target": 28000,
+      "tolerancePercent": 20
+    }
+  ]
+}

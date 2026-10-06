@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-09-29T04:11:01.523Z",
+  "status": "pass",
+  "failureCount": 0,
+  "warningCount": 0,
+  "failures": [],
+  "warnings": [],
+  "summary": {
+    "chapterCount": 8,
+    "totalTargetWords": 28000,
+    "plannedChapterWords": 28000,
+    "dependencyEdges": 18
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "timestamp": "2026-09-29T04:10:52.031Z",
+  "standalone": false,
+  "workspace": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper",
+  "total": 8,
+  "directiveBookTotal": 0,
+  "issueCount": 0,
+  "warningCount": 0,
+  "issues": [],
+  "warnings": [],
+  "autoFix": null,
+  "results": [
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch01-executive-summary.md",
+      "metrics": {
+        "chars": 2783,
+        "dashDensity": 0,
+        "intPercentDensity": 0,
+        "longSentenceRatio": 83.33,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch02-background-motivation.md",
+      "metrics": {
+        "chars": 3904,
+        "dashDensity": 0,
+        "intPercentDensity": 0.26,
+        "longSentenceRatio": 61.54,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [
+          "line 5: numeric claim lacks source mark"
+        ],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch03-system-architecture.md",
+      "metrics": {
+        "chars": 5376,
+        "dashDensity": 0,
+        "intPercentDensity": 0,
+        "longSentenceRatio": 46.43,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch04-ai-generation-pipeline.md",
+      "metrics": {
+        "chars": 4472,
+        "dashDensity": 0,
+        "intPercentDensity": 0.45,
+        "longSentenceRatio": 44.44,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [
+          "line 11: numeric claim lacks source mark"
+        ],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch05-rendering-shaders.md",
+      "metrics": {
+        "chars": 3596,
+        "dashDensity": 0,
+        "intPercentDensity": 0,
+        "longSentenceRatio": 55.56,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch06-deployment-operations.md",
+      "metrics": {
+        "chars": 3069,
+        "dashDensity": 0,
+        "intPercentDensity": 0,
+        "longSentenceRatio": 46.15,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch07-engineering-practice.md",
+      "metrics": {
+        "chars": 3668,
+        "dashDensity": 0,
+        "intPercentDensity": 0,
+        "longSentenceRatio": 46.15,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    },
+    {
+      "filePath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/manuscript/ch08-limitations-roadmap-contribution.md",
+      "metrics": {
+        "chars": 3216,
+        "dashDensity": 0,
+        "intPercentDensity": 0,
+        "longSentenceRatio": 55.56,
+        "duplicateSectionIds": [],
+        "absoluteClaims": [],
+        "vcrIssues": [],
+        "connectors": {},
+        "connectorDensity": 0,
+        "adverbs": {},
+        "adverbDensity": 0,
+        "imperative": {},
+        "imperativeTotal": 0,
+        "buzz": []
+      },
+      "issues": [],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "status": "pass",
+  "stage": "quality",
+  "code": 0,
+  "workspace": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper",
+  "layout": "long",
+  "layoutSource": "filesystem",
+  "minScore": 7.5,
+  "checkedFiles": [
+    "manuscript/ch01-executive-summary.md",
+    "manuscript/ch02-background-motivation.md",
+    "manuscript/ch03-system-architecture.md",
+    "manuscript/ch04-ai-generation-pipeline.md",
+    "manuscript/ch05-rendering-shaders.md",
+    "manuscript/ch06-deployment-operations.md",
+    "manuscript/ch07-engineering-practice.md",
+    "manuscript/ch08-limitations-roadmap-contribution.md"
+  ],
+  "result": {
+    "score": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "avgScore": 8.34,
+      "files": [
+        {
+          "file": "manuscript/ch01-executive-summary.md",
+          "overall": 8.3,
+          "layers": {
+            "S": 8.3,
+            "P": 10,
+            "C": 5,
+            "B": 10
+          },
+          "passed": true
+        },
+        {
+          "file": "manuscript/ch02-background-motivation.md",
+          "overall": 7.7,
+          "layers": {
+            "S": 8.3,
+            "P": 7.5,
+            "C": 5,
+            "B": 10
+          },
+          "passed": true
+        },
+        {
+          "file": "manuscript/ch03-system-architecture.md",
+          "overall": 8.5,
+          "layers": {
+            "S": 8.3,
+            "P": 7.5,
+            "C": 10,
+            "B": 8.3
+          },
+          "passed": true
+        },
+        {
+          "file": "manuscript/ch04-ai-generation-pipeline.md",
+          "overall": 9.6,
+          "layers": {
+            "S": 8.3,
+            "P": 10,
+            "C": 10,
+            "B": 10
+          },
+          "passed": true
+        },
+        {
+          "file": "manuscript/ch05-rendering-shaders.md",
+          "overall": 8.9,
+          "layers": {
+            "S": 8.3,
+            "P": 7.5,
+            "C": 10,
+            "B": 10
+          },
+          "passed": true
+        },
+        {
+          "file": "manuscript/ch06-deployment-operations.md",
+          "overall": 7.7,
+          "layers": {
+            "S": 8.3,
+            "P": 7.5,
+            "C": 5,
+            "B": 10
+          },
+          "passed": true
+        },
+        {
+          "file": "manuscript/ch07-engineering-practice.md",
+          "overall": 7.7,
+          "layers": {
+            "S": 8.3,
+            "P": 7.5,
+            "C": 5,
+            "B": 10
+          },
+          "passed": true
+        },
+        {
+          "file": "manuscript/ch08-limitations-roadmap-contribution.md",
+          "overall": 8.3,
+          "layers": {
+            "S": 8.3,
+            "P": 7.5,
+            "C": 7.5,
+            "B": 10
+          },
+          "passed": true
+        }
+      ]
+    },
+    "machine": {
+      "issueCount": 0,
+      "warningCount": 0,
+      "reportPath": "/home/user/Doubao/chats/38444574205007618/holo-lab/docs/whitepaper/.doubao-book-writer/reports/quality-machine.json"
+    }
+  },
+  "failures": [],
+  "warnings": []
+}
