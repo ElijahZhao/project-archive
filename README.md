@@ -36,3 +36,4 @@
 | --- | --- | --- |
 | cinerec | ✅ | ✅ |
 | metanutri | ✅ | 待补 |
+| Holo-Card-Studio | 待补 | ✅ |
