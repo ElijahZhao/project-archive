@@ -126,3 +126,32 @@ honors 填 5 条真实荣誉。源 config 与 gallery/cards/<id>/ 归档副本�
 **现象**：run_pipeline 产生 card.blend1（Blender 自动备份），git add -A 时被提交。
 **对策**：.gitignore 补 `generator/projects/*/card.blend1`，git rm --cached 移出。
 **教训**：批量渲染后 git status 前先 grep 备份文件后缀。
+
+---
+
+# 殷商纪 Vol.IV-VI（13 张扩展）· 新坑记录
+
+> 日期：2026-10-07 ｜ commit f2fb2dd ｜ 77 卡上线（殷商纪 27 张）
+
+## 坑 L：run_pipeline --project 必须传全路径
+
+**现象**：`--project shang-bi-gan`（slug）直接 FileNotFoundError "Write card-config.json
+from references/config.example.json first"；之前 generate_typography 传 slug 也有过同款报错。
+**对策**：`--project /abs/path/generator/projects/<slug>` 全路径即通。
+**教训**：generator 系脚本 root 全部 `Path(a.project).resolve()`，一律传全路径。
+
+## 坑 M：背景空镜反复被模型塞器物/文字（本批 9 次重生成）
+
+**现象**：微子背景两次被塞礼器供桌香炉；龙虎尊/乳钉鼎背景被塞展柜浮雕；
+妇好钺背景被画军帐长矛；贞人背景两次被画篝火（第二次还带"甲子壬寅"刻字）；
+干支背景被画古籍书页繁体字。
+**对策**：终极配方 = "极简单色背景：X色到Y色的平滑渐变，没有任何……，只有干净的渐变色块"
+（"纯抽象光影背景"配方仍会被塞意象，单色渐变配方最可靠）。
+**教训**：背景 prompt 中不要出现任何具象名词（陶器/烛台/篝火），名词即召唤意象；
+文字必须用 "没有任何文字" 显式封锁。
+
+## 坑 N：publish --tags 传全 3 标签可避免覆盖（正面验证）
+
+**现象**：本次 publish 时 --tags 直接传 config 的完整 3 个标签（如"殷商,三仁,忠臣"），
+发布后 style_tags 无丢失，无需事后手动补回（对比坑 I 的教训）。
+**对策**：publish 命令的 --tags 永远照抄 config.style_tags 全量。
