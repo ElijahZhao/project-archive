@@ -95,3 +95,34 @@ honors 填 5 条真实荣誉。源 config 与 gallery/cards/<id>/ 归档副本�
 - Blender build+export 11 卡 ≈ 30 分钟（2.5min/卡）
 - publish（preview.webm 96 帧）11 卡 ≈ 68 分钟（6min/卡）
 - 合计 ≈ 1 小时 50 分钟（不含等待 Actions）
+
+---
+
+# GTA Vice City Nights Vol.II（场景文化 8 张）· 新坑记录
+
+> 日期：2026-10-07 ｜ commit 7989e54 ｜ 64 卡上线
+
+## 坑 H：场景卡主体被模型塞入异物（骷髅事件）
+
+**现象**：Vercetti Estate 施工地主体图，模型自己加了一个巨大的骷髅骨架（"奇幻反差"）。
+**对策**：prompt 显式负面清单 "absolutely no skeleton, no skull, no bones"，重生成一次通过。
+**教训**：场景卡（非人物卡）主体图必须显式列出可能被"氛围化"塞入的异物清单。
+
+## 坑 I：publish_card --tags 覆盖 config.style_tags
+
+**现象**：config 里 style_tags 写了 3 个（vice-city, 80s, 场景），publish 后 cards.json 只剩
+--tags 传入的 2 个。
+**对策**：发布后手动把维度标签补回 cards.json（或 publish 时 --tags 直接传全 3 个）。
+**教训**：publish_card.py 的 --tags 是覆盖语义，不是合并。
+
+## 坑 J：edition 前导序号必须三位数
+
+**现象**：写了 "57 / 008"，测试 test_edition_format 断言 `^\d{3} / \d{3}$` 失败。
+**对策**：源 config + 归档副本 + cards.json 三处统一改为 "057 / 008"。
+**教训**：批量建 config 时 edition 直接按 `f"{n:03d} / 008"` 格式化。
+
+## 坑 K：Blender 自动备份 card.blend1 入库
+
+**现象**：run_pipeline 产生 card.blend1（Blender 自动备份），git add -A 时被提交。
+**对策**：.gitignore 补 `generator/projects/*/card.blend1`，git rm --cached 移出。
+**教训**：批量渲染后 git status 前先 grep 备份文件后缀。
