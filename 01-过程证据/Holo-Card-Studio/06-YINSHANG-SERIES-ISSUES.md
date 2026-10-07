@@ -47,3 +47,51 @@ cd /path && nohup cmd2 &   # 第二个单独一行
 - 首次从 huggingface 源下载返回 29 字节假文件（应为 ~170MB）→ 校验失败。
 - 正确源：`https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx`（167MB）。
 - rembg 运行时会自动下载到 rembg 模型缓存，可先行预下载到 `~/.u2net/u2net.onnx` 省一次下载。
+
+---
+
+# 第二批 11 张（Vol.I 余 3 + Vol.II + Vol.III）· 新坑记录
+
+> 日期：2026-10-07 ｜ commit 8875f77 ｜ 56 卡上线
+
+## 坑 D：背景图"空镜"难纯净（重生成 3 次的教训）
+
+**现象**：为后母戊鼎/妇好鸮尊/商汤生成的背景图，模型反复塞入器物
+（鼎、鸟形尊、神兽雕塑）或文字（竖排篆字、血迹战场）。
+
+**对策**：prompt 显式负面清单："画面中绝对没有任何文字、字符、铭文，也没有
+人物、武器和血迹，是纯净的自然空景 / 暗色空景"。商汤 bg 2 次、后母戊鼎 bg 1 次、
+鸮尊 bg 3 次后才干净。鸮尊 bg 最终用"纯光影氛围空镜：只有光与阴影与纹理"成功。
+
+**教训**：器物类卡的背景 prompt 必须同时禁"器物类名 + 场景物 + 文字"三类；
+纯氛围（光锥/渐变/暗纹）是最可靠的空镜配方。
+
+## 坑 E：stats/honors 为 falsy 导致 CI 失败
+
+**现象**：批量建 config 时 stats={}、honors=[]，`pytest test_config_schema.py`
+报 `缺少必填字段 ['stats','honors']` 与 `honors 应为非空列表`。
+
+**根因**：测试用 `if not cfg.get(k)` 判缺失——`{}`/`[]` 是 falsy。
+
+**对策**：stats 用非空字符串 `"Yin-Shang Chronicles · 殷商纪 · NNN/014"`，
+honors 填 5 条真实荣誉。源 config 与 gallery/cards/<id>/ 归档副本双写。
+
+**教训**：批量生成 config 的脚本里直接按旧卡格式（stats=str、honors=list[5]）
+预填，不要留空壳。
+
+## 坑 F：generate_typography 的 CWD 敏感
+
+传 `generator/projects/<slug>` 全路径可跑；只传 slug 会 FileNotFoundError。
+与 run_pipeline（--project 也吃全路径）一致。
+
+## 坑 G：generator/projects/_preview/ 临时检查图入库
+
+旧卡检查图（shang-fu-hao_check.png 等）在 `generator/projects/_preview/`，
+需追加到 .gitignore（`generator/projects/_preview/`），否则污染提交。
+
+## 实测节奏（沙箱）
+- image_gen 22 张分 4 批 ≈ 10 分钟（含 4 次背景重生成）
+- 四层处理 + 排版 11 卡 ≈ 4 分钟
+- Blender build+export 11 卡 ≈ 30 分钟（2.5min/卡）
+- publish（preview.webm 96 帧）11 卡 ≈ 68 分钟（6min/卡）
+- 合计 ≈ 1 小时 50 分钟（不含等待 Actions）
