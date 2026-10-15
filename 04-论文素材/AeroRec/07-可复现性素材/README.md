@@ -14,3 +14,4 @@
 ## 需补（待补测）
 - 主仓库代码 **tag / DOI**（H-5：代码引用需打 tag 或申请 DOI，否则审稿人 clone 到的非论文描述版本）。
 - 硬件信息（CPU / 内存峰值）已在 `data/bench.json`，可补入附录。
+- **面向论文读者的技术文档**：主仓库 `docs/tech-report.md`（tag `v0.1.0`；无 emoji、无营销腔，实验配置+原始数据+Limitations+复现指引，与本文档数字同源）。`[已溯源] 6bde395`
